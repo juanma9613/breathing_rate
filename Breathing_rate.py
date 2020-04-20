@@ -86,7 +86,8 @@ class Breathing_rate:
         
 
     def _preprocessing(self, method, filter_name, parameter):
-        """[summary]
+        """
+        Method to preprocess the audio file.
         
         Parameters
         ----------
@@ -202,7 +203,8 @@ class Breathing_rate:
 
 
     def _butter_lowpass(self, cutoff, fs, order=5):
-        """Computes the coefficients of the filter 
+        """
+        Computes the coefficients of the filter 
         
         Parameters
         ----------
@@ -229,7 +231,7 @@ class Breathing_rate:
         
         Parameters
         ----------
-        data : [type]
+        data : list or np.array 1D
             The audio to be filtered
         cutoff : int
             The desired cutoff frecuency
@@ -240,7 +242,7 @@ class Breathing_rate:
         
         Returns
         -------
-        [type]
+        np.array
             filtered audio
         """
         b, a = self._butter_lowpass(cutoff, fs, order=order)
