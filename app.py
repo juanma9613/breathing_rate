@@ -1,7 +1,4 @@
 import os
-import sys
-
-sys.path.append('../')
 
 import boto3
 import traceback
@@ -82,7 +79,7 @@ def get():
 
 
 def download_audio_from_s3(audio_path):
-    local_audio_files_dir = "../audios"
+    local_audio_files_dir = "audios"
     os.makedirs(local_audio_files_dir) if not os.path.exists(local_audio_files_dir) else None
     audio_path = audio_path.strip()
     audio_path = audio_path.replace("s3://", '')
@@ -100,4 +97,4 @@ def download_audio_from_s3(audio_path):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0", port=5000, threaded=True)
