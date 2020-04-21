@@ -40,13 +40,24 @@ def calculate_bf():
                 }
                 status_code = 400
             if is_body_well_formed:
-                breathing_rate = Breathing_rate(audio_path)
-                breathing_frequency = breathing_rate.get_breathing_rate()
-                response = {
-                    "audio_path": audio_path,
-                    "breathing_frequency": breathing_frequency["rate"]
-                }
-                status_code = 200
+                try:
+                    audio_path = download_audio_from_s3(audio_path=audio_path)
+                except:
+                    audio_path = None
+                if audio_path:
+                    breathing_rate = Breathing_rate(audio_path=audio_path)
+                    breathing_frequency = breathing_rate.get_breathing_rate()
+                    os.remove(audio_path)
+                    response = {
+                        "audio_path": audio_path,
+                        "breathing_frequency": breathing_frequency["rate"]
+                    }
+                    status_code = 200
+                else:
+                    response = {
+                        "message": "Specify a valid audio path."
+                    }
+                    status_code = 400
         else:
             response = {
                 "message": "Send a JSON request."
@@ -68,6 +79,24 @@ def calculate_bf():
 @app.route("/health_check", methods=["GET"])
 def get():
     return "OK"
+
+
+def download_audio_from_s3(audio_path):
+    local_audio_files_dir = "../audios"
+    os.makedirs(local_audio_files_dir) if not os.path.exists(local_audio_files_dir) else None
+    audio_path = audio_path.strip()
+    audio_path = audio_path.replace("s3://", '')
+    audio_path_split = audio_path.split('/')
+    bucket_name = audio_path_split[0]
+    key = '/'.join(audio_path_split[1:])
+    audio_file_name = os.path.basename(key)
+    local_audio_path = os.path.join(local_audio_files_dir, audio_file_name)
+    try:
+        s3_client.download_file(bucket_name, key, local_audio_path)
+    except:
+        audio_file_name = ''
+    audio_path = local_audio_path if audio_file_name != '' else None
+    return audio_path
 
 
 if __name__ == "__main__":
