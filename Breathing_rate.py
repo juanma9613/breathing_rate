@@ -82,7 +82,7 @@ class Breathing_rate:
             rate = freqs[idx_max]
         else:
             raise ValueError('invalid get_rate_method')
-        return {'rate': rate}
+        return {'rate': rate * 60}
         
 
     def _preprocessing(self, method, filter_name, parameter):
