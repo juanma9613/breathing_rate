@@ -5,6 +5,7 @@ from scipy.signal import butter, lfilter, freqz
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io.wavfile
+from pydub import AudioSegment
 
 class Breathing_rate:
     """
@@ -20,7 +21,7 @@ class Breathing_rate:
             The path of the audio file
         """
         self._read_audio(audio_path)
-        
+
     def _read_audio(self, path:str):
         """
         Tries to read an audio file stored in the path and calculates the properties original_rate,
@@ -31,15 +32,18 @@ class Breathing_rate:
         path : str
             The path of the audio file
         """
-
         try:
-            self.original_rate, self.audio = scipy.io.wavfile.read(path)
+            extension = path.split('.')[-1]
+            sound = AudioSegment.from_file(path)
+            self.audio = np.array(sound.get_array_of_samples())
+            self.original_rate = sound.frame_rate
             if len(self.audio.shape) != 1:
                 self.audio = self.audio[:,0]
+            
             self.audio_duration = len(self.audio) / self.original_rate
 
         except Exception as e:
-            print('Error reading the audio file, please provide a .wav or mp4 file')
+            print('please insert a valid audio file')
             print(e)
 
     def get_breathing_rate(self, method:str='abs', filter_name:str= 'lowpass',
