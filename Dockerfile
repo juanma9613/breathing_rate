@@ -2,7 +2,7 @@
 FROM python:3-slim
 
 # Install gcc.
-RUN apt-get update && apt-get install -y gcc
+RUN apt-get update && apt-get install -y gcc ffmpeg
 
 # Set the application directory.
 WORKDIR /app
