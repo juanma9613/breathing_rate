@@ -96,6 +96,10 @@ class Breathing_rate:
         rate *= 60
         if rate > 150 or rate < 2:
             status = False
+        
+        if self.audio_duration < 3:
+            status = False
+
         return {'rate': rate, 'status':status}
         
 
