@@ -45,6 +45,8 @@ class Breathing_rate:
         except Exception as e:
             print('please insert a valid audio file')
             print(e)
+            raise ValueError('please insert a valid audio file')
+        
 
     def get_breathing_rate(self, method:str='abs', filter_name:str= 'lowpass',
                            parameter= 1.2, get_rate_method='count') -> dict :
@@ -75,18 +77,26 @@ class Breathing_rate:
         self.preprocessed_signal = self._preprocessing(method=method,
                                                        filter_name=filter_name,
                                                        parameter=parameter)
-        
+
+
         if get_rate_method == 'count':
-            self.n_exhalations, self.n_inhalations = self._count_respiration()
+            self.n_exhalations, self.n_inhalations, status = self._count_respiration()
             rate = self.n_exhalations / self.audio_duration
             
         elif get_rate_method == 'PSD':
             freqs, psd = scipy.signal.welch(self.preprocessed_signal, fs = self.preprocessing_rate) 
             idx_max = np.argmax(psd)
             rate = freqs[idx_max]
+
+            # psd can't be verified 
+            status = True
         else:
             raise ValueError('invalid get_rate_method')
-        return {'rate': rate * 60}
+        
+        rate *= 60
+        if rate > 150 or rate < 2:
+            status = False
+        return {'rate': rate, 'status':status}
         
 
     def _preprocessing(self, method, filter_name, parameter):
@@ -170,9 +180,40 @@ class Breathing_rate:
                             indices_crosses_up.append(i)
                 start = True
                 greater = True if  array[i] > mean else False
-        return len(indices_crosses_up), len(indices_crosses_down)
-    
-        
+
+        status = self._count_respiration_validation(indices_crosses_up)
+
+        return len(indices_crosses_up), len(indices_crosses_down), status
+
+    def _count_respiration_validation(self, indices_crossing, percentage_extreme=0.4):
+        """A method to verify the validation of the method count_respirations when the argument 'count' is provided
+        to get the breathing rate.
+
+
+        Parameters
+        ----------
+        indices_crossing : np.array
+            An array with the indices of the array self.preprocessed_signal where the exhalations were detected.
+        percentage_extreme : float, optional
+            If no exhalations are detected in the start or end segments of length 'percentage_extreme*len(self.preprocessed_signal)',
+            the audio count is flagged as invalid.
+        Returns
+        -------
+        boolean
+            A boolean that is true only if the results make sense. If there are no exhalations in 
+            the beggining of the audio or in the last part, the result is False.
+        """
+
+        array_length = len(self.preprocessed_signal)
+        if len(indices_crossing) == 0:
+            return False
+        elif indices_crossing[0] > percentage_extreme * array_length:
+            return False 
+        elif indices_crossing[-1] < (1-percentage_extreme) * array_length:
+            return False
+        else:
+            return True
+
     def _subsample_audio(self, audio, original_rate:int, desired_rate:int):
         """
         This function subsamples a audio given at some rate to another desired rate
