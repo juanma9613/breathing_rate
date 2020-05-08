@@ -23,7 +23,7 @@ s3_client = boto3.client(
 )
 
 
-@app.route("/calculate_bf", methods=["POST"])
+@app.route("/breathing/calculate_bf", methods=["POST"])
 def calculate_bf():
     try:
         if request.is_json:
@@ -49,11 +49,13 @@ def calculate_bf():
                     os.remove(audio_path)
                     response = {
                         "audio_path": audio_path,
-                        "breathing_frequency": breathing_frequency["rate"]
+                        "breathing_frequency": breathing_frequency["rate"],
+                        "is_breathing_frequency_valid": breathing_frequency["status"]
                     }
                     status_code = 200
                     telemetry_report = {
                         "breathing_frequency": breathing_frequency["rate"],
+                        "is_breathing_frequency_valid": breathing_frequency["status"],
                         "original_audio_path": original_audio_path
                     }
                     post_telemetry_report(telemetry_report=telemetry_report)
@@ -80,7 +82,7 @@ def calculate_bf():
     return jsonify(response), status_code
 
 
-@app.route("/health_check", methods=["GET"])
+@app.route("/breathing/health_check", methods=["GET"])
 def get():
     return "OK"
 
@@ -108,12 +110,13 @@ def post_telemetry_report(telemetry_report):
     body = {
         "telemetry_type": "breathing_frequency",
         "telemetry_report": {
-            "breathing_frequency": telemetry_report["breathing_frequency"]
+            "breathing_frequency": telemetry_report["breathing_frequency"],
+            "is_breathing_frequency_valid": telemetry_report["is_breathing_frequency_valid"],
         },
         "telemetry_source_id": telemetry_report["original_audio_path"]
     }
     try:
-        response = requests.post(url="https://reports-api-dev.5vid.co/api/v1/telemetry-reports/",
+        response = requests.post(url=os.getenv("REPORTS_API_URL"),
                                  headers={"Content-Type": "application/json",
                                           "Accept": "application/json",
                                           "Authorization": f"Bearer {token}"},

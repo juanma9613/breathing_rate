@@ -7,11 +7,14 @@ RUN apt-get update && apt-get install -y gcc ffmpeg
 # Set the application directory.
 WORKDIR /app
 
-# Copy the code from the current folder to /app.
-ADD . /app
+# Copy requirements.txt to /app.
+COPY requirements.txt /app/requirements.txt
 
 # Install requirements.
 RUN pip install -r requirements.txt
+
+# Copy the code from the current folder to /app.
+ADD . /app
 
 # Make port 5000 available for links and/or publishing.
 EXPOSE 5000
